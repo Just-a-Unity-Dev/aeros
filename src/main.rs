@@ -120,7 +120,6 @@ fn main() {
 }
 
 fn handle_input(tcod: &mut Tcod, game: &Game, player: &mut Object) -> bool {
-    // TODO: handle input
     let key = tcod.root.wait_for_keypress(true);
     match key {
         Key { code: Escape, .. } => return true, // exit game

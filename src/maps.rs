@@ -1,10 +1,11 @@
 use crate::tile::Tile;
+use crate::object::*;
 use std::cmp;
 
 // maps part
 pub type Map = Vec<Vec<Tile>>;
 
-pub fn make_map(map_height: i32, map_width: i32) -> Map {
+pub fn make_map(map_height: i32, map_width: i32, player: &mut Object) -> Map {
     let mut map = vec![vec![Tile::wall(); map_height as usize]; map_width as usize];
     let room1: Rect = Rect::new(20, 15, 10, 15);
     let room2: Rect = Rect::new(50, 15, 10, 15);

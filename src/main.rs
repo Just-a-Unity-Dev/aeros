@@ -4,6 +4,9 @@ use tcod::input::Key;
 use tcod::input::KeyCode::*;
 use tcod::BackgroundFlag::*;
 
+mod maps;
+mod tile;
+
 const SCREEN_WIDTH: i32 = 80;
 const SCREEN_HEIGHT: i32 = 50;
 const LIMIT_FPS: i32 = 60;
@@ -18,40 +21,15 @@ const COLOR_DARK_GROUND: Color = Color {
     b: 0,
 };
 
-/// a tile of the map and its properties
-#[derive(Clone, Copy, Debug)]
-struct Tile {
-    blocked: bool,
-    block_sight: bool,
-}
-
-impl Tile {
-    pub fn empty() -> Self {
-        Tile {
-            blocked: false,
-            block_sight: false,
-        }
-    }
-
-    pub fn wall() -> Self {
-        Tile {
-            blocked: true,
-            block_sight: true,
-        }
-    }
-}
-
-type Map = Vec<Vec<Tile>>;
-
-struct Game {
-    map: Map
-}
-
 // structs
 
 struct Tcod {
     root: Root,
     con: Offscreen
+}
+
+struct Game {
+    map: maps::Map
 }
 
 struct Object {
@@ -79,15 +57,6 @@ impl Object {
         con.set_default_foreground(self.color);
         con.put_char(self.x, self.y, self.char, BackgroundFlag::None);
     }
-}
-
-fn make_map() -> Map {
-    let mut map = vec![vec![Tile::empty(); MAP_HEIGHT as usize]; MAP_WIDTH as usize];
-
-    map[30][22] = Tile::wall();
-    map[50][22] = Tile::wall();
-
-    map
 }
 
 fn render_all(tcod: &mut Tcod, game: &Game, objects: &[Object]) {
@@ -124,7 +93,7 @@ fn main() {
     let player = Object::new(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, '@',  WHITE);
     let con = Offscreen::new(MAP_WIDTH, MAP_HEIGHT);
     let game = Game {
-        map: make_map()
+        map: maps::make_map(MAP_HEIGHT, MAP_WIDTH)
     };
     let mut objects = [player];
     

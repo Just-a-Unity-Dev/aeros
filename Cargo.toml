@@ -1,6 +1,11 @@
 [package]
 name = "aeros"
-version = "0.1.0"
+description = "An ASCII roguelike"
+readme = "README.md"
+homepage = "https://github.com/Just-a-Unity-Dev/aeros"
+repository = "https://github.com/Just-a-Unity-Dev/aeros"
+keywords = ["tcod", "ascii", "game"]
+version = "0.0.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

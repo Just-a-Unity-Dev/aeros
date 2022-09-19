@@ -1,3 +1,8 @@
+name: Release
+
+concurrency:
+  group: release
+
 on:
   release:
     types: [created]

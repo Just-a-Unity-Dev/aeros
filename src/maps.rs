@@ -138,6 +138,7 @@ fn place_objects(room: Rect, map: &Map, objects: &mut Vec<Object>) {
                     power: 3,
                     on_death: DeathCallback::Monster,
                 });
+                fish.attack_message = "chomps".into();
                 fish.ai = Some(Ai::Basic);
                 fish
             } else {
@@ -150,6 +151,7 @@ fn place_objects(room: Rect, map: &Map, objects: &mut Vec<Object>) {
                     power: 4,
                     on_death: DeathCallback::Monster,
                 });
+                husk.attack_message = "scratches".into();
                 husk.ai = Some(Ai::Basic);
                 husk
             };

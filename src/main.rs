@@ -7,18 +7,26 @@ mod object;
 mod input;
 mod maps;
 mod tile;
-mod game;
 mod ai;
 
 // rendering
 const SCREEN_WIDTH: i32 = 80;
 const SCREEN_HEIGHT: i32 = 50;
+
+const BAR_WIDTH: i32 = 20;
+const PANEL_HEIGHT: i32 = 7;
+const PANEL_Y: i32 = SCREEN_HEIGHT - PANEL_HEIGHT;
+
+const MSG_X: i32 = BAR_WIDTH + 2;
+const MSG_WIDTH: i32 = SCREEN_WIDTH - BAR_WIDTH - 2;
+const MSG_HEIGHT: usize = PANEL_HEIGHT as usize - 1;
+
 const LIMIT_FPS: i32 = 60;
 const PLAYER: usize = 0;
 
 // map stuff
 const MAP_WIDTH: i32 = 80;
-const MAP_HEIGHT: i32 = 45;
+const MAP_HEIGHT: i32 = 43;
 
 // FOV
 const FOV_ALGO: FovAlgorithm = FovAlgorithm::Basic; // default FOV algorithm
@@ -43,7 +51,42 @@ const COLOR_LIGHT_GROUND: Color = Color {
     b: 180,
 };
 
-fn render_all(tcod: &mut structs::Tcod, game: &mut game::Game, objects: &[object::Object], fov_recompute: bool) {
+fn render_bar(
+    panel: &mut Offscreen,
+    x: i32,
+    y: i32,
+    total_width: i32,
+    name: &str,
+    value: i32,
+    maximum: i32,
+    bar_color: Color,
+    back_color: Color,
+) {
+    // render a bar (HP, experience, etc). First calculate the width of the bar
+    let bar_width = (value as f32 / maximum as f32 * total_width as f32) as i32;
+
+    // render the background first
+    panel.set_default_background(back_color);
+    panel.rect(x, y, total_width, 1, false, BackgroundFlag::Screen);
+
+    // now render the bar on top
+    panel.set_default_background(bar_color);
+    if bar_width > 0 {
+        panel.rect(x, y, bar_width, 1, false, BackgroundFlag::Screen);
+    }
+
+    // finally, some centered text with the values
+    panel.set_default_foreground(WHITE);
+    panel.print_ex(
+        x + total_width / 2,
+        y,
+        BackgroundFlag::None,
+        TextAlignment::Center,
+        &format!("{}: {}/{}", name, value, maximum),
+    );
+}
+
+fn render_all(tcod: &mut structs::Tcod, game: &mut structs::Game, objects: &[object::Object], fov_recompute: bool) {
     if fov_recompute {
         // recompute FOV if needed (the player moved or something)
         let player = &objects[PLAYER];
@@ -89,17 +132,48 @@ fn render_all(tcod: &mut structs::Tcod, game: &mut game::Game, objects: &[object
         object.draw(&mut tcod.con);
     }
 
+    // prepare to render the GUI panel
+    tcod.panel.set_default_background(BLACK);
+    tcod.panel.clear();
+
     // show the player's stats
-    tcod.root.set_default_foreground(WHITE);
-    if let Some(fighter) = objects[PLAYER].fighter {
-        tcod.root.print_ex(
-            1,
-            SCREEN_HEIGHT - 2,
-            BackgroundFlag::None,
-            TextAlignment::Left,
-            format!("HP: {}/{} ", fighter.hp, fighter.max_hp),
-        );
+    let hp = objects[PLAYER].fighter.map_or(0, |f| f.hp);
+    let max_hp = objects[PLAYER].fighter.map_or(0, |f| f.max_hp);
+    render_bar(
+        &mut tcod.panel,
+        1,
+        1,
+        BAR_WIDTH,
+        "HP",
+        hp,
+        max_hp,
+        LIGHT_RED,
+        DARKER_RED,
+    );
+
+    // print the game messages, one line at a time
+    let mut y = MSG_HEIGHT as i32;
+    for &(ref msg, color) in game.messages.iter().rev() {
+        let msg_height = tcod.panel.get_height_rect(MSG_X, y, MSG_WIDTH, 0, msg);
+        y -= msg_height;
+        if y < 0 {
+            break;
+        }
+        tcod.panel.set_default_foreground(color);
+        tcod.panel.print_rect(MSG_X, y, MSG_WIDTH, 0, msg);
     }
+
+    // blit the contents of `panel` to the root console
+    blit(
+        &tcod.panel,
+        (0, 0),
+        (SCREEN_WIDTH, PANEL_HEIGHT),
+        &mut tcod.root,
+        (0, PANEL_Y),
+        1.0,
+        1.0,
+    );
+
 
     // blit the contents of "con" to the root console
     blit(
@@ -132,14 +206,21 @@ fn main() {
     player.alive = true;
 
     let mut objects = vec![player];
-    let mut game = game::Game {
-        map: maps::make_map(MAP_HEIGHT, MAP_WIDTH, &mut objects)
+    let mut game = structs::Game {
+        map: maps::make_map(MAP_HEIGHT, MAP_WIDTH, &mut objects),
+        messages: structs::Messages::new()
     };
+
+    game.messages.add(
+        "Welcome to space. Wear your hardsuit and prepare some medicine.",
+        RED,
+    );
 
     let mut tcod = structs::Tcod { 
         root, 
-        con: Offscreen::new(MAP_WIDTH, MAP_HEIGHT), 
-        fov: FovMap::new(MAP_WIDTH, MAP_HEIGHT) 
+        con: Offscreen::new(MAP_WIDTH, MAP_HEIGHT),
+        panel: Offscreen::new(SCREEN_WIDTH, PANEL_HEIGHT), 
+        fov: FovMap::new(MAP_WIDTH, MAP_HEIGHT),
     };
     tcod::system::set_fps(LIMIT_FPS);
 
@@ -170,7 +251,7 @@ fn main() {
         tcod.root.flush();
 
         previous_player_position = objects[PLAYER].pos();
-        let player_action = input::handle_input(&mut tcod, &game, &mut objects);
+        let player_action = input::handle_input(&mut tcod, &mut game, &mut objects);
 
         if player_action == input::PlayerAction::Exit {
             break;
@@ -180,7 +261,7 @@ fn main() {
         if objects[PLAYER].alive && player_action != input::PlayerAction::DidntTakeTurn {
             for id in 0..objects.len() {
                 if objects[id].ai.is_some() {
-                    ai::ai_take_turn(id, &tcod, &game, &mut objects);
+                    ai::ai_take_turn(id, &tcod, &mut game, &mut objects);
                 }
             }
         }

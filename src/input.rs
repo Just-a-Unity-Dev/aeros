@@ -2,7 +2,6 @@ use tcod::input::Key;
 use tcod::input::KeyCode::*;
 use crate::structs::*;
 use crate::object::*;
-use crate::game::*;
 use PlayerAction::*;
 
 const PLAYER: usize = 0;
@@ -14,7 +13,7 @@ pub enum PlayerAction {
     Exit,
 }
 
-pub fn handle_input(tcod: &mut Tcod, game: &Game, objects: &mut Vec<Object>) -> PlayerAction {
+pub fn handle_input(tcod: &mut Tcod, game: &mut Game, objects: &mut Vec<Object>) -> PlayerAction {
     let key = tcod.root.wait_for_keypress(true);
     let player_alive = objects[PLAYER].alive;
     match (key, key.text(), player_alive) {
@@ -37,19 +36,19 @@ pub fn handle_input(tcod: &mut Tcod, game: &Game, objects: &mut Vec<Object>) -> 
 
         // movement keys
         (Key { code: Up, .. }, _, true) => {
-            player_move_or_attack(0, -1, &game, objects);
+            player_move_or_attack(0, -1, game, objects);
             return TookTurn;
         },
         (Key { code: Down, .. }, _, true) => {
-            player_move_or_attack(0, 1, &game, objects);
+            player_move_or_attack(0, 1, game, objects);
             return TookTurn;
         },
         (Key { code: Left, .. }, _, true) => {
-            player_move_or_attack(-1, 0, &game, objects);
+            player_move_or_attack(-1, 0, game, objects);
             return TookTurn;
         },
         (Key { code: Right, .. }, _, true) => {
-            player_move_or_attack(1, 0, &game, objects);
+            player_move_or_attack(1, 0, game, objects);
             return TookTurn;
         },
 

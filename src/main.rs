@@ -2,9 +2,9 @@ use tcod::console::*;
 use tcod::colors::*;
 use tcod::map::{FovAlgorithm, Map as FovMap};
 
+mod g_input;
 mod structs;
 mod object;
-mod input;
 mod maps;
 mod tile;
 mod ai;
@@ -251,14 +251,14 @@ fn main() {
         tcod.root.flush();
 
         previous_player_position = objects[PLAYER].pos();
-        let player_action = input::handle_input(&mut tcod, &mut game, &mut objects);
+        let player_action = g_input::handle_input(&mut tcod, &mut game, &mut objects);
 
-        if player_action == input::PlayerAction::Exit {
+        if player_action == g_input::PlayerAction::Exit {
             break;
         }
 
         // let monsters take their turn
-        if objects[PLAYER].alive && player_action != input::PlayerAction::DidntTakeTurn {
+        if objects[PLAYER].alive && player_action != g_input::PlayerAction::DidntTakeTurn {
             for id in 0..objects.len() {
                 if objects[id].ai.is_some() {
                     ai::ai_take_turn(id, &tcod, &mut game, &mut objects);

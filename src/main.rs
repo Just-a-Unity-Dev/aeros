@@ -242,9 +242,6 @@ fn main() {
     while !tcod.root.window_closed() {
         // refresh the console
         tcod.con.clear();
-        for object in &objects {
-            object.draw(&mut tcod.con);
-        }
 
         // render it
         let fov_recompute = previous_player_position != (objects[PLAYER].pos());

@@ -130,7 +130,7 @@ fn place_objects(room: Rect, map: &Map, objects: &mut Vec<Object>) {
             let mut monster = if rand::random::<f32>() < 0.8 {
                 // 80% chance of getting an orc
                 // create a husk
-                let mut fish = Object::new(x, y, 'f', "fish", AZURE, true);
+                let mut fish = Object::new(x, y, 'f', "Fish", AZURE, true);
                 fish.fighter = Some(Fighter {
                     max_hp: 10,
                     hp: 10,
@@ -143,7 +143,7 @@ fn place_objects(room: Rect, map: &Map, objects: &mut Vec<Object>) {
                 fish
             } else {
                 // create a husk
-                let mut husk = Object::new(x, y, 'H', "husk", BRASS, true);
+                let mut husk = Object::new(x, y, 'H', "Husk", BRASS, true);
                 husk.fighter = Some(Fighter {
                     max_hp: 16,
                     hp: 16,

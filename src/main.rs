@@ -195,7 +195,7 @@ fn main() {
     .title("Aeros")
     .init();
     
-    let mut player = object::Object::new(25, 23, '@', "player", DESATURATED_GREEN, false);
+    let mut player = object::Object::new(25, 23, '@', "You", DESATURATED_GREEN, false);
     player.fighter = Some(object::Fighter {
         max_hp: 30,
         hp: 30,
@@ -204,6 +204,7 @@ fn main() {
         on_death: object::DeathCallback::Player,
     });
     player.alive = true;
+    player.attack_message = "attack".into();
 
     let mut objects = vec![player];
     let mut game = structs::Game {

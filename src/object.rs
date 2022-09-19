@@ -138,13 +138,13 @@ impl Object {
             // make the target take some damage
             game.messages.add(format!(
                 "{} {} {}, dealing {} damage!",
-                self.name, self.attack_message, target.name, damage
+                self.name, self.attack_message, target.name.to_lowercase(), damage
             ), DESATURATED_GREEN);
             target.take_damage(damage, game);
         } else {
             game.messages.add(format!(
                 "{} {} {} but it has no effect!",
-                self.name, self.attack_message, target.name
+                self.name, self.attack_message, target.name.to_lowercase()
             ), DESATURATED_GREEN);
         }
     }

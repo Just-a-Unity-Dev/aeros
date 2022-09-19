@@ -8,6 +8,7 @@ mod input;
 mod maps;
 mod tile;
 mod game;
+mod ai;
 
 // rendering
 const SCREEN_WIDTH: i32 = 80;
@@ -43,13 +44,6 @@ const COLOR_LIGHT_GROUND: Color = Color {
 };
 
 fn render_all(tcod: &mut structs::Tcod, game: &mut game::Game, objects: &[object::Object], fov_recompute: bool) {
-    // draw all objects in the list
-    for object in objects {
-        if tcod.fov.is_in_fov(object.x, object.y) {
-            object.draw(&mut tcod.con);
-        }
-    }
-
     if fov_recompute {
         // recompute FOV if needed (the player moved or something)
         let player = &objects[PLAYER];
@@ -83,7 +77,33 @@ fn render_all(tcod: &mut structs::Tcod, game: &mut game::Game, objects: &[object
         }
     }
 
+    // draw all objects in the list
+    let mut to_draw: Vec<_> = objects
+        .iter()
+        .filter(|o| tcod.fov.is_in_fov(o.x, o.y))
+        .collect();
+    // sort so that non-blocknig objects come first
+    to_draw.sort_by(|o1, o2| o1.blocks.cmp(&o2.blocks));
+
+    // draw the objects in the list
+    for object in &to_draw {
+        object.draw(&mut tcod.con);
+    }
+
     blit(&tcod.con, (0,0), (MAP_WIDTH, MAP_HEIGHT), &mut tcod.root, (0,0), 1.0, 1.0);
+
+    // show the player's stats
+    tcod.root.set_default_foreground(WHITE);
+    if let Some(fighter) = objects[PLAYER].fighter {
+        tcod.root.print_ex(
+            1,
+            SCREEN_HEIGHT - 2,
+            BackgroundFlag::None,
+            TextAlignment::Left,
+            format!("HP: {}/{} ", fighter.hp, fighter.max_hp),
+        );
+    }
+
 }
 
 fn main() {
@@ -95,6 +115,13 @@ fn main() {
     .init();
     
     let mut player = object::Object::new(25, 23, '@', "player", WHITE, false);
+    player.fighter = Some(object::Fighter {
+        max_hp: 30,
+        hp: 30,
+        defense: 2,
+        power: 5,
+        on_death: object::DeathCallback::Player,
+    });
     player.alive = true;
 
     let mut objects = vec![player];
@@ -140,10 +167,9 @@ fn main() {
 
         // let monsters take their turn
         if objects[PLAYER].alive && player_action != input::PlayerAction::DidntTakeTurn {
-            for object in &objects {
-                // only if object is not player
-                if (object as *const _) != (&objects[PLAYER] as *const _) {
-                    println!("The {} growls!", object.name);
+            for id in 0..objects.len() {
+                if objects[id].ai.is_some() {
+                    ai::ai_take_turn(id, &tcod, &game, &mut objects);
                 }
             }
         }

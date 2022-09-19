@@ -31,7 +31,7 @@ const MAP_HEIGHT: i32 = 43;
 // FOV
 const FOV_ALGO: FovAlgorithm = FovAlgorithm::Basic; // default FOV algorithm
 const FOV_LIGHT_WALLS: bool = true; // light walls or not
-const LANTERN_RADIUS: i32 = 5;
+const LANTERN_RADIUS: i32 = 50;
 
 // colors
 const COLOR_DARK_WALL: Color = Color { r: 30, g: 30, b: 30 };

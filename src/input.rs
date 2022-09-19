@@ -36,19 +36,19 @@ pub fn handle_input(tcod: &mut Tcod, game: &Game, objects: &mut Vec<Object>) -> 
         (Key { code: Escape, .. }, _, _) => return Exit, // exit game
 
         // movement keys
-        (Key { code: Up, .. }, _, _) => {
+        (Key { code: Up, .. }, _, true) => {
             player_move_or_attack(0, -1, &game, objects);
             return TookTurn;
         },
-        (Key { code: Down, .. }, _, _) => {
+        (Key { code: Down, .. }, _, true) => {
             player_move_or_attack(0, 1, &game, objects);
             return TookTurn;
         },
-        (Key { code: Left, .. }, _, _) => {
+        (Key { code: Left, .. }, _, true) => {
             player_move_or_attack(-1, 0, &game, objects);
             return TookTurn;
         },
-        (Key { code: Right, .. }, _, _) => {
+        (Key { code: Right, .. }, _, true) => {
             player_move_or_attack(1, 0, &game, objects);
             return TookTurn;
         },

@@ -127,32 +127,31 @@ fn place_objects(room: Rect, map: &Map, objects: &mut Vec<Object>) {
         let x = rand::thread_rng().gen_range(room.x1 + 1, room.x2);
         let y = rand::thread_rng().gen_range(room.y1 + 1, room.y2);
         if !is_blocked(x, y, map, objects) {
-
             let mut monster = if rand::random::<f32>() < 0.8 {
                 // 80% chance of getting an orc
-                // create an orc
-                let mut orc = Object::new(x, y, 'o', "orc", DESATURATED_GREEN, true);
-                orc.fighter = Some(Fighter {
+                // create a husk
+                let mut fish = Object::new(x, y, 'f', "fish", AZURE, true);
+                fish.fighter = Some(Fighter {
                     max_hp: 10,
                     hp: 10,
                     defense: 0,
                     power: 3,
                     on_death: DeathCallback::Monster,
                 });
-                orc.ai = Some(Ai::Basic);
-                orc
+                fish.ai = Some(Ai::Basic);
+                fish
             } else {
-                // create a troll
-                let mut troll = Object::new(x, y, 'T', "troll", DARKER_GREEN, true);
-                troll.fighter = Some(Fighter {
+                // create a husk
+                let mut husk = Object::new(x, y, 'H', "husk", BRASS, true);
+                husk.fighter = Some(Fighter {
                     max_hp: 16,
                     hp: 16,
                     defense: 1,
                     power: 4,
                     on_death: DeathCallback::Monster,
                 });
-                troll.ai = Some(Ai::Basic);
-                troll
+                husk.ai = Some(Ai::Basic);
+                husk
             };
 
             monster.alive = true;

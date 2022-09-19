@@ -64,6 +64,7 @@ fn render_all(tcod: &mut structs::Tcod, game: &mut game::Game, objects: &[object
                 (true, true) => COLOR_LIGHT_WALL,
                 (true, false) => COLOR_LIGHT_GROUND,
             };
+
             let explored = &mut game.map[x as usize][y as usize].explored;
             if visible {
                 // since it's visible, explore it
@@ -77,20 +78,16 @@ fn render_all(tcod: &mut structs::Tcod, game: &mut game::Game, objects: &[object
         }
     }
 
-    // draw all objects in the list
     let mut to_draw: Vec<_> = objects
         .iter()
         .filter(|o| tcod.fov.is_in_fov(o.x, o.y))
         .collect();
     // sort so that non-blocknig objects come first
     to_draw.sort_by(|o1, o2| o1.blocks.cmp(&o2.blocks));
-
     // draw the objects in the list
     for object in &to_draw {
         object.draw(&mut tcod.con);
     }
-
-    blit(&tcod.con, (0,0), (MAP_WIDTH, MAP_HEIGHT), &mut tcod.root, (0,0), 1.0, 1.0);
 
     // show the player's stats
     tcod.root.set_default_foreground(WHITE);
@@ -104,6 +101,16 @@ fn render_all(tcod: &mut structs::Tcod, game: &mut game::Game, objects: &[object
         );
     }
 
+    // blit the contents of "con" to the root console
+    blit(
+        &tcod.con,
+        (0, 0),
+        (MAP_WIDTH, MAP_HEIGHT),
+        &mut tcod.root,
+        (0, 0),
+        1.0,
+        1.0,
+    );
 }
 
 fn main() {
@@ -114,7 +121,7 @@ fn main() {
     .title("Aeros")
     .init();
     
-    let mut player = object::Object::new(25, 23, '@', "player", WHITE, false);
+    let mut player = object::Object::new(25, 23, '@', "player", DESATURATED_GREEN, false);
     player.fighter = Some(object::Fighter {
         max_hp: 30,
         hp: 30,
@@ -137,7 +144,7 @@ fn main() {
     tcod::system::set_fps(LIMIT_FPS);
 
     for y in 0..MAP_HEIGHT {
-        for x in 0..MAP_WIDTH {
+        for x in 0..MAP_WIDTH { 
             tcod.fov.set(
                 x,
                 y,
@@ -165,6 +172,10 @@ fn main() {
         previous_player_position = objects[PLAYER].pos();
         let player_action = input::handle_input(&mut tcod, &game, &mut objects);
 
+        if player_action == input::PlayerAction::Exit {
+            break;
+        }
+
         // let monsters take their turn
         if objects[PLAYER].alive && player_action != input::PlayerAction::DidntTakeTurn {
             for id in 0..objects.len() {
@@ -172,10 +183,6 @@ fn main() {
                     ai::ai_take_turn(id, &tcod, &game, &mut objects);
                 }
             }
-        }
-
-        if player_action == input::PlayerAction::Exit {
-            break;
         }
     }
 }

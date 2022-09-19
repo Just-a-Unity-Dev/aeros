@@ -1,4 +1,4 @@
-use tcod::map::{FovAlgorithm, Map as FovMap};
+use tcod::map::{Map as FovMap};
 use tcod::console::*;
 
 pub struct Tcod {

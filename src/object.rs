@@ -110,11 +110,14 @@ impl Object {
         (self.x, self.y)
     }
 
-    pub fn  take_damage(&mut self, damage: i32) {
+    pub fn take_damage(&mut self, damage: i32) {
         // apply damage if possible
         if let Some(fighter) = self.fighter.as_mut() {
             if damage > 0 {
                 fighter.hp -= damage;
+                if fighter.hp < 0 {
+                    fighter.hp = 0;
+                }
             }
         }
         // check for death, call the death function

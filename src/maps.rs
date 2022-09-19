@@ -1,17 +1,20 @@
 use crate::tile::Tile;
 use crate::object::*;
+use tcod::colors::*;
 use rand::Rng;
 use std::cmp;
 
 //parameters for dungeon generator
+const MAX_ROOM_MONSTERS: i32 = 3;
 const ROOM_MAX_SIZE: i32 = 10;
 const ROOM_MIN_SIZE: i32 = 6;
 const MAX_ROOMS: i32 = 30;
+const PLAYER: usize = 0;
 
 // maps part
 pub type Map = Vec<Vec<Tile>>;
 
-pub fn make_map(map_height: i32, map_width: i32, player: &mut Object) -> Map {
+pub fn make_map(map_height: i32, map_width: i32, objects: &mut Vec<Object>) -> Map {
     let mut map = vec![vec![Tile::wall(); map_height as usize]; map_width as usize];
     let mut rooms = vec![];
 
@@ -37,13 +40,15 @@ pub fn make_map(map_height: i32, map_width: i32, player: &mut Object) -> Map {
             // "paint" it to the map's tiles
             create_room(new_room, &mut map);
 
+            place_objects(new_room, &mut map, objects);
+
+
             // center coordinates of the new room, will be useful later
             let (new_x, new_y) = new_room.center();
 
             if rooms.is_empty() {
                 // this is the first room, where the player starts at
-                player.x = new_x;
-                player.y = new_y;
+                objects[PLAYER].set_pos(new_x, new_y);
             } else {
                 // all rooms after the first:
                 // connect it to the previous room with a tunnel
@@ -109,6 +114,29 @@ pub fn create_room(room: Rect, map: &mut Map) {
     for x in (room.x1 + 1)..room.x2 {
         for y in (room.y1 + 1)..room.y2 {
             map[x as usize][y as usize] = Tile::empty();
+        }
+    }
+}
+
+fn place_objects(room: Rect, map: &Map, objects: &mut Vec<Object>) {
+    // choose random number of monsters
+    let num_monsters = rand::thread_rng().gen_range(0, MAX_ROOM_MONSTERS + 1);
+
+    for _ in 0..num_monsters {
+        // choose random spot for this monster
+        let x = rand::thread_rng().gen_range(room.x1 + 1, room.x2);
+        let y = rand::thread_rng().gen_range(room.y1 + 1, room.y2);
+        if !is_blocked(x, y, map, objects) {
+
+            let mut monster = if rand::random::<f32>() < 0.8 {  // 80% chance of getting an orc
+                // create an orc
+                Object::new(x, y, 'o', "orc", DESATURATED_GREEN, true)
+            } else {
+                Object::new(x, y, 'T', "troll", DARKER_GREEN, true)
+            };
+
+            monster.alive = true;
+            objects.push(monster);
         }
     }
 }

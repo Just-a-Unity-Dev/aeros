@@ -1,18 +1,19 @@
 use tcod::console::*;
 use tcod::colors::*;
-use tcod::input::Key;
-use tcod::input::KeyCode::*;
 use tcod::map::{FovAlgorithm, Map as FovMap};
 
+mod structs;
+mod object;
+mod input;
 mod maps;
 mod tile;
-mod object;
 mod game;
 
 // rendering
 const SCREEN_WIDTH: i32 = 80;
 const SCREEN_HEIGHT: i32 = 50;
 const LIMIT_FPS: i32 = 60;
+const PLAYER: usize = 0;
 
 // map stuff
 const MAP_WIDTH: i32 = 80;
@@ -41,15 +42,7 @@ const COLOR_LIGHT_GROUND: Color = Color {
     b: 180,
 };
 
-// structs
-
-struct Tcod {
-    root: Root,
-    con: Offscreen,
-    fov: FovMap
-}
-
-fn render_all(tcod: &mut Tcod, game: &mut game::Game, objects: &[object::Object], fov_recompute: bool) {
+fn render_all(tcod: &mut structs::Tcod, game: &mut game::Game, objects: &[object::Object], fov_recompute: bool) {
     // draw all objects in the list
     for object in objects {
         if tcod.fov.is_in_fov(object.x, object.y) {
@@ -59,7 +52,7 @@ fn render_all(tcod: &mut Tcod, game: &mut game::Game, objects: &[object::Object]
 
     if fov_recompute {
         // recompute FOV if needed (the player moved or something)
-        let player = &objects[0];
+        let player = &objects[PLAYER];
         tcod.fov
             .compute_fov(player.x, player.y, LANTERN_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO);
     }
@@ -101,14 +94,15 @@ fn main() {
     .title("Aeros")
     .init();
     
-    let player = object::Object::new(25, 23, '@',  WHITE);
-    let npc = object::Object::new(50, 23, '@', YELLOW);
-    let mut objects = [player, npc];
+    let mut player = object::Object::new(25, 23, '@', "player", WHITE, false);
+    player.alive = true;
+
+    let mut objects = vec![player];
     let mut game = game::Game {
-        map: maps::make_map(MAP_HEIGHT, MAP_WIDTH, &mut objects[0])
+        map: maps::make_map(MAP_HEIGHT, MAP_WIDTH, &mut objects)
     };
-    
-    let mut tcod = Tcod { 
+
+    let mut tcod = structs::Tcod { 
         root, 
         con: Offscreen::new(MAP_WIDTH, MAP_HEIGHT), 
         fov: FovMap::new(MAP_WIDTH, MAP_HEIGHT) 
@@ -137,32 +131,25 @@ fn main() {
         }
 
         // render it
-        let fov_recompute = previous_player_position != (objects[0].x, objects[0].y);
+        let fov_recompute = previous_player_position != (objects[PLAYER].pos());
         render_all(&mut tcod, &mut game, &objects, fov_recompute);
         tcod.root.flush();
 
-        let player = &mut objects[0];
-        previous_player_position = (player.x, player.y);
-        let exit = handle_input(&mut tcod, &game, player);
-        if exit {
+        previous_player_position = objects[PLAYER].pos();
+        let player_action = input::handle_input(&mut tcod, &game, &mut objects);
+
+        // let monsters take their turn
+        if objects[PLAYER].alive && player_action != input::PlayerAction::DidntTakeTurn {
+            for object in &objects {
+                // only if object is not player
+                if (object as *const _) != (&objects[PLAYER] as *const _) {
+                    println!("The {} growls!", object.name);
+                }
+            }
+        }
+
+        if player_action == input::PlayerAction::Exit {
             break;
         }
     }
-}
-
-fn handle_input(tcod: &mut Tcod, game: &game::Game, player: &mut object::Object) -> bool {
-    let key = tcod.root.wait_for_keypress(true);
-    match key {
-        Key { code: Escape, .. } => return true, // exit game
-
-        // movement keys
-        Key { code: Up, .. } => player.move_by(0, -1, game),
-        Key { code: Down, .. } => player.move_by(0, 1, game),
-        Key { code: Left, .. } => player.move_by(-1, 0, game),
-        Key { code: Right, .. } => player.move_by(1, 0, game),
-
-        _ => {}
-    }
-
-    false
 }
